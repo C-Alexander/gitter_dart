@@ -26,8 +26,7 @@ abstract class OAuth {
             headers: tokenInformations.headers);
       } else {
         response = await http.get(
-            "${tokenInformations.url}?${mapToQueryParams(
-                tokenInformations.params)}");
+            "${tokenInformations.url}?${mapToQueryParams(tokenInformations.params)}");
       }
       token = json.decode(response.body);
     }

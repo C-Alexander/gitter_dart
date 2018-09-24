@@ -18,7 +18,8 @@ abstract class GitterOAuth extends OAuth {
     String resultCode = await requestCode();
     if (resultCode != null) {
       generateTokenInformations();
-      return new GitterToken.fromJson(await getToken());
+      return new GitterToken.fromJson(
+          (await getToken()).cast<String, String>());
     }
     return null;
   }
