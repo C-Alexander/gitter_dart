@@ -50,8 +50,8 @@ class MeApi {
   Future<Iterable<Room>> rooms() async {
     final http.Response response =
         await http.get("$_baseUrl/rooms", headers: _getHeaders(token));
-    final json = _getResponseBody(response);
-    final rooms = json.map((map) => new Room.fromJson(map)).toList();
+    final body = _getResponseBody(response);
+    final rooms = body.map((map) => new Room.fromJson(map)).toList();
     // TODO: better sort
     // fixme: should we do that here ?
     rooms
@@ -81,8 +81,8 @@ class UserApi {
 
   Future<Iterable<User>> search(String query,
       {int limit: 15, String type: "gitter"}) async {
-    String url = "$_baseUrl?${mapToQuery(
-        {"q": query, "limit": limit, "type": type})}";
+    String url =
+        "$_baseUrl?${mapToQuery({"q": query, "limit": limit, "type": type})}";
     final http.Response response =
         await http.get(url, headers: _getHeaders(_token));
     final Iterable<Map> json = _getResponseBody(response)["results"];
@@ -99,9 +99,9 @@ class UserApi {
   Future<Room> userJoinRoom(String userId, String roomId) async {
     final data = {"id": roomId};
     final http.Response response = await http.post("$_baseUrl/$userId/rooms",
-        body: JSON.encode(data), headers: _getHeaders(_token));
-    final json = _getResponseBody(response);
-    return new Room.fromJson(json);
+        body: json.encode(data), headers: _getHeaders(_token));
+    final body = _getResponseBody(response);
+    return new Room.fromJson(body);
   }
 }
 
@@ -114,12 +114,12 @@ class RoomApi {
 
   Future<Iterable<Room>> search(String query,
       {int limit: 15, String type: "gitter"}) async {
-    String url = "$_baseUrl?${mapToQuery(
-        {"q": query, "limit": limit, "type": type})}";
+    String url =
+        "$_baseUrl?${mapToQuery({"q": query, "limit": limit, "type": type})}";
     final http.Response response =
         await http.get(url, headers: _getHeaders(token));
-    final Iterable<Map> json = _getResponseBody(response)["results"];
-    return json.map((map) => new Room.fromJson(map)).toList();
+    final Iterable<Map> body = _getResponseBody(response)["results"];
+    return body.map((map) => new Room.fromJson(map)).toList();
   }
 
   Future<Iterable<Message>> messagesFromRoomId(String id,
@@ -133,17 +133,17 @@ class RoomApi {
     String url = "$_baseUrl/$id/chatMessages?${mapToQuery(params)}";
     final http.Response response =
         await http.get(url, headers: _getHeaders(token));
-    final Iterable<Map> json = _getResponseBody(response);
-    return json
+    final Iterable<Map> body = _getResponseBody(response);
+    return body
         .map<Message>((Map message) => new Message.fromJson(message))
         .toList();
   }
 
   Future<Message> sendMessageToRoomId(String id, String message) async {
-    final Map<String, String> json = {"text": message};
+    final Map<String, String> body = {"text": message};
     final http.Response response = await http.post(
       "$_baseUrl/$id/chatMessages",
-      body: JSON.encode(json),
+      body: json.encode(body),
       headers: _getHeaders(token),
     );
     return new Message.fromJson(_getResponseBody(response));
@@ -151,10 +151,10 @@ class RoomApi {
 
   Future<Room> roomFromUri(String uri) async {
     uri = Uri.parse(uri).pathSegments.first;
-    final Map<String, String> json = {"uri": uri};
+    final Map<String, String> body = {"uri": uri};
     final http.Response response = await http.post(
       "$_baseUrl",
-      body: JSON.encode(json),
+      body: json.encode(body),
       headers: _getHeaders(token),
     );
     final room = new Room.fromJson(_getResponseBody(response));
@@ -166,8 +166,8 @@ class RoomApi {
       "$_baseUrl/$roomId/users/$userId",
       headers: _getHeaders(token),
     );
-    final json = _getResponseBody(response);
-    return json['success'];
+    final body = _getResponseBody(response);
+    return body['success'];
   }
 
   final Map<String, Stream<Message>> _streamMapper = {};
@@ -181,16 +181,16 @@ class RoomApi {
     req.headers.addAll(_getHeaders(token));
     http.StreamedResponse responseStream = await _client.send(req);
 
-    _streamMapper[roomId] = responseStream.stream.asBroadcastStream()
+    _streamMapper[roomId] = responseStream.stream
+        .asBroadcastStream()
         .map((Iterable<int> data) =>
             (new String.fromCharCodes(data)).replaceAll("\r", ""))
-        .where((String json) => json != " \n" && json != "\n")
-        .map((String json) => new Message.fromJson(JSON.decode(json)))
+        .where((String message) => message != " \n" && message != "\n")
+        .map((String message) => new Message.fromJson(json.decode(message)))
         .asBroadcastStream();
 
     return _streamMapper[roomId];
   }
-
 }
 
 class GitterApi {
@@ -223,27 +223,27 @@ class GroupApi {
   Future<Iterable<Group>> get() async {
     final http.Response response =
         await http.get("$_baseUrl/", headers: _getHeaders(token));
-    final Iterable<Map> json = _getResponseBody(response);
-    return json.map((map) => new Group.fromJson(map)).toList();
+    final Iterable<Map> body = _getResponseBody(response);
+    return body.map((map) => new Group.fromJson(map)).toList();
   }
 
   Future<Iterable<Room>> roomsOf(String groupId) async {
     final http.Response response =
         await http.get("$_baseUrl/$groupId/rooms", headers: _getHeaders(token));
-    final Iterable<Map> json = _getResponseBody(response);
-    return json.map((map) => new Room.fromJson(map)).toList();
+    final Iterable<Map> body = _getResponseBody(response);
+    return body.map((map) => new Room.fromJson(map)).toList();
   }
 
   Future<Iterable<Room>> suggestedRoomsOf(String groupId) async {
     final http.Response response = await http
         .get("$_baseUrl/$groupId/suggestedRooms", headers: _getHeaders(token));
-    final Iterable<Map> json = _getResponseBody(response);
-    return json.map((map) => new Room.fromJson(map)).toList();
+    final Iterable<Map> body = _getResponseBody(response);
+    return body.map((map) => new Room.fromJson(map)).toList();
   }
 }
 
 dynamic _getResponseBody(http.Response response) {
-  final body = JSON.decode(response.body);
+  final body = json.decode(response.body);
   if (response != null &&
       response.statusCode >= 200 &&
       response.statusCode < 300) {

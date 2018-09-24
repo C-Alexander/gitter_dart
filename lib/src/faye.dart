@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:gitter/gitter.dart';
 import 'package:gitter/src/models/faye_message.dart';
 import 'package:http/http.dart' as http;
@@ -23,7 +24,10 @@ class GitterFayeSubscriber {
 
   User get user => _user;
 
-  GitterFayeSubscriber(this._token);
+  GitterFayeSubscriber(this._token) {
+    assert(
+    _token != null, "Please hand a valid Gitter API Token to Gitter_Dart");
+  }
 
   _handshake() async {
     final handshake = [
@@ -35,15 +39,14 @@ class GitterFayeSubscriber {
         "supportedConnectionTypes": ["websocket"]
       }
     ];
-
     final response = await http.post(_urlApi,
-        body: "message=${Uri.encodeComponent(JSON.encode(handshake))}",
-        headers: {HttpHeaders.CONTENT_TYPE: "text/plain;charset=UTF-8"});
+        body: "message=${Uri.encodeComponent(json.encode(handshake))}",
+        headers: {HttpHeaders.contentTypeHeader: ContentType.text.toString()});
     if (!(response.statusCode >= 200 && response.statusCode < 300)) {
       throw new Exception("Handshake failed, verify your token");
     }
     final message = new GitterFayeMessage.fromJson(
-        (JSON.decode(response.body) as List).first);
+        (json.decode(response.body) as List).first);
     _clientId = message.clientId;
     _user = new User.fromJson(message.ext["context"]["user"]);
   }
@@ -63,7 +66,7 @@ class GitterFayeSubscriber {
 
   _ping() {
     final message = {
-      "data":{"reason":"ping"}
+      "data": {"reason": "ping"}
     };
     final channel = "/api/v1/ping2";
     _send(channel, message);
@@ -104,7 +107,7 @@ class GitterFayeSubscriber {
           }
           _mapper[msg.channel] = [];
         } else if (msg.successful == false) {
-            throw new Exception("'connect' failed");
+          throw new Exception("'connect' failed");
         }
       }
     });
@@ -120,9 +123,9 @@ class GitterFayeSubscriber {
     message ??= {};
     message["clientId"] = clientId;
     message["channel"] = channel;
-    message["id"]=  _generateId();
+    message["id"] = _generateId();
 
-    _socket.add(JSON.encode(message));
+    _socket.add(json.encode(message));
   }
 
   subscribe(String subscription, [OnMessage handler]) {
@@ -138,7 +141,7 @@ class GitterFayeSubscriber {
       "clientId": clientId
     };
 
-    _socket.add(JSON.encode(message));
+    _socket.add(json.encode(message));
   }
 
   unsubscribe(String subscription, [OnMessage handler]) {
@@ -152,7 +155,7 @@ class GitterFayeSubscriber {
       "clientId": clientId
     };
 
-    _socket.add(JSON.encode(message));
+    _socket.add(json.encode(message));
   }
 
   subscribeToRoom(String roomId, [OnMessage handler]) =>
@@ -203,14 +206,14 @@ class GitterFayeSubscriber {
           void onDone(),
           bool cancelOnError,
           bool dispatch: true}) =>
-      _socketStream.listen((data) {
-        final decode = JSON.decode(data);
+      _socketStream.cast<String>().transform(JsonDecoder()).map((jsonMessages) {
         var messages;
-        if (decode is Iterable) {
-          messages =
-              decode.map((d) => new GitterFayeMessage.fromJson(d)).toList();
+        if (jsonMessages is Iterable) {
+          messages = jsonMessages
+              .map((d) => new GitterFayeMessage.fromJson(d))
+              .toList();
         } else {
-          messages = [new GitterFayeMessage.fromJson(decode)];
+          messages = [new GitterFayeMessage.fromJson(jsonMessages)];
         }
         if (dispatch) {
           _dispatch(messages);
@@ -218,7 +221,7 @@ class GitterFayeSubscriber {
         if (onData != null) {
           onData(messages);
         }
-      }, onDone: onDone, cancelOnError: cancelOnError);
+      }).listen((_) {}, onDone: onDone, cancelOnError: cancelOnError);
 
   close() {
     _socket?.close();

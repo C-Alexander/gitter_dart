@@ -1,0 +1,9 @@
+name: fate
+description: An example project for Gitter.
+
+environment:
+  sdk: '>=2.0.0 <3.0.0'
+
+dependencies:
+  gitter:
+    path: '../'

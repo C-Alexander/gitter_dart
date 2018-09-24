@@ -1,7 +1,6 @@
 library gitter.user;
 
 class User {
-
   String id;
   String username;
   String displayName;
@@ -69,7 +68,10 @@ class User {
     model.avatarUrlSmall = map["avatarUrlSmall"];
     model.avatarUrlMedium = map["avatarUrlMedium"];
     model.staff = map["staff"];
-    model.providers = map["providers"]?.map((String val) => val)?.toList();
+    model.providers = (map["providers"] as List<dynamic>)
+        ?.cast<String>()
+        ?.map((val) => val)
+        ?.toList();
     model.v = map["v"];
     model.gv = map["gv"];
     return model;

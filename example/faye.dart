@@ -5,6 +5,9 @@ const token = const String.fromEnvironment("TOKEN");
 const roomId = const String.fromEnvironment("ROOM_ID");
 
 main() async {
+  assert(token != null, "Please set a TOKEN in your environment variables");
+  assert(roomId != null, "Please set a ROOM_ID in your environment variables");
+
   GitterFayeSubscriber subscriber = new GitterFayeSubscriber(token);
   await subscriber.connect();
 
